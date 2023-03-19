@@ -35,11 +35,6 @@ impl CPU {
             register_map.insert(register, i * 2);
         }
 
-        // TODO: put this in a test instead
-        for (i, register) in all::<Register>().enumerate() {
-            assert_eq!(register_map.get(&register), Some(&(i * 2)));
-        }
-
         CPU {
             memory,
             // multiplied by two because each register is two bytes big
