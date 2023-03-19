@@ -1,24 +1,12 @@
 use std::collections::HashMap;
 use data_view::View;
-use enum_iterator::{all, cardinality, Sequence};
+use enum_iterator::{all, cardinality};
 use crate::cpu::instructions::{ADD_REG_REG, MOV_LIT_R1, MOV_LIT_R2};
+use crate::cpu::register::Register;
 use crate::create_memory::create_memory;
 
 pub mod instructions;
-
-#[derive(Copy, Clone, Debug, Sequence, Hash, PartialEq, Eq)]
-pub enum Register {
-    Ip,
-    Acc,
-    R1,
-    R2,
-    R3,
-    R4,
-    R5,
-    R6,
-    R7,
-    R8,
-}
+pub mod register;
 
 pub struct CPU {
     memory: Vec<u8>,
