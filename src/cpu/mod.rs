@@ -3,9 +3,7 @@ use data_view::View;
 use enum_iterator::{all, cardinality, Sequence};
 use crate::create_memory::create_memory;
 
-pub const MOV_LIT_R1: u8  = 0x10;
-pub const MOV_LIT_R2: u8  = 0x11;
-pub const ADD_REG_REG: u8 = 0x12;
+pub mod instructions;
 
 #[derive(Copy, Clone, Debug, Sequence, Hash, PartialEq, Eq)]
 pub enum Register {

@@ -1,4 +1,5 @@
-use crate::cpu::{ADD_REG_REG, CPU, MOV_LIT_R1, MOV_LIT_R2};
+use crate::cpu::CPU;
+use crate::cpu::instructions::{MOV_LIT_R1, MOV_LIT_R2, ADD_REG_REG};
 use crate::create_memory::create_memory;
 
 mod cpu;
