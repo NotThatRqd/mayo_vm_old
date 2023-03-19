@@ -141,6 +141,16 @@ impl CPU {
                 self.set_register(Register::Acc, reg1_value + reg2_value).unwrap();
             }
 
+            JMP_NOT_EQ => {
+                let value = self.fetch16();
+                let address = self.fetch16();
+
+                if value != self.get_register(Register::Acc).unwrap() {
+                    self.set_register(Register::Ip, address)
+                        .unwrap();
+                }
+            }
+
             _ => {
                 panic!("unknown instruction {:02X?}", instruction);
             }
@@ -157,6 +167,7 @@ impl CPU {
 #[cfg(test)]
 mod tests {
     use crate::cpu::{CPU, Register};
+    use crate::cpu::instructions::{ADD_REG_REG, MOV_LIT_REG};
     use crate::create_memory::create_memory;
 
     #[test]
@@ -174,5 +185,42 @@ mod tests {
         assert_eq!(cpu.register_map.get(&Register::R6), Some(&14));
         assert_eq!(cpu.register_map.get(&Register::R7), Some(&16));
         assert_eq!(cpu.register_map.get(&Register::R8), Some(&18));
+    }
+
+    const R1: u8  = 2;
+    const R2: u8  = 3;
+
+    #[test]
+    fn addition_program() {
+        let mut memory = create_memory(16);
+
+        let mut i = 0;
+        let mut add = |n: u8| {
+            memory[i] = n;
+            i += 1;
+        };
+
+        add(MOV_LIT_REG);
+        add(0x12);
+        add(0x34);
+        add(R1);
+
+        add(MOV_LIT_REG);
+        add(0xAB);
+        add(0xCD);
+        add(R2);
+
+        add(ADD_REG_REG);
+        add(R1);
+        add(R2);
+
+
+        let mut cpu = CPU::new(memory);
+        cpu.step();
+        cpu.step();
+        cpu.step();
+
+        let acc_value = cpu.get_register(Register::Acc).unwrap();
+        assert_eq!(acc_value, 0x1234 + 0xABCD);
     }
 }
