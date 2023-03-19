@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use data_view::View;
 use enum_iterator::{all, cardinality, Sequence};
+use crate::cpu::instructions::{ADD_REG_REG, MOV_LIT_R1, MOV_LIT_R2};
 use crate::create_memory::create_memory;
 
 pub mod instructions;

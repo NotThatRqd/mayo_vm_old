@@ -1,9 +1,6 @@
-use crate::cpu::CPU;
-use crate::cpu::instructions::{MOV_LIT_R1, MOV_LIT_R2, ADD_REG_REG};
-use crate::create_memory::create_memory;
-
-mod cpu;
-mod create_memory;
+use mayo_lib::cpu::CPU;
+use mayo_lib::cpu::instructions::{MOV_LIT_R1, MOV_LIT_R2, ADD_REG_REG};
+use mayo_lib::create_memory::create_memory;
 
 fn main() {
     let mut memory = create_memory(256);
