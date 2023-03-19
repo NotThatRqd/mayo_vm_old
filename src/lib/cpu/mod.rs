@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use data_view::View;
 use enum_iterator::{all, cardinality};
-use crate::cpu::instructions::{ADD_REG_REG, MOV_LIT_R1, MOV_LIT_R2};
+use crate::cpu::instructions::*;
 use crate::cpu::register::Register;
 use crate::create_memory::create_memory;
 
@@ -37,7 +37,18 @@ impl CPU {
         }
     }
 
-    fn get_register(&self, register: Register) -> Option<u16> {
+    pub fn view_memory_at(&self, address: usize) {
+        let mut next_eight_bytes = vec![];
+        for i in 0..=8 {
+            let next = self.memory.read_at::<u8>(address + i)
+                .unwrap();
+            next_eight_bytes.push(next);
+        }
+
+        println!("0x{:04X?}: {:02X?}", address, next_eight_bytes);
+    }
+
+    pub fn get_register(&self, register: Register) -> Option<u16> {
         let index = self.register_map.get(&register)
             .expect(&format!("register {:?} not in self.register_map", register));
 
@@ -80,16 +91,47 @@ impl CPU {
         instruction
     }
 
+    fn fetch_register_index(&mut self) -> usize {
+        // multiplied by two because each register is two bytes long
+        (self.fetch() as usize % self.register_map.len()) * 2
+    }
+
     fn execute(&mut self, instruction: u8) -> bool {
         match instruction {
-            MOV_LIT_R1 => {
+            MOV_LIT_REG => {
                 let literal = self.fetch16();
-                self.set_register(Register::R1, literal).unwrap();
+                let register = self.fetch_register_index();
+                self.registers.write_at::<u16>(register, literal)
+                    .unwrap();
             }
-            MOV_LIT_R2 => {
-                let literal = self.fetch16();
-                self.set_register(Register::R2, literal).unwrap();
+
+            MOV_REG_REG => {
+                let reg_from = self.fetch_register_index();
+                let reg_to = self.fetch_register_index();
+                let value = self.registers.read_at::<u16>(reg_from)
+                    .unwrap();
+                self.registers.write_at::<u16>(reg_to, value)
+                    .unwrap();
             }
+
+            MOV_REG_MEM => {
+                let reg_from = self.fetch_register_index();
+                let address = self.fetch16() as usize;
+                let value = self.registers.read_at::<u16>(reg_from)
+                    .unwrap();
+                self.memory.write_at::<u16>(address, value)
+                    .unwrap();
+            }
+
+            MOV_MEM_REG => {
+                let address = self.fetch16() as usize;
+                let reg_to = self.fetch_register_index();
+                let value = self.memory.read_at::<u16>(address)
+                    .unwrap();
+                self.registers.write_at::<u16>(reg_to, value)
+                    .unwrap();
+            }
+
             ADD_REG_REG => {
                 let reg1 = self.fetch() as usize;
                 let reg2 = self.fetch() as usize;
@@ -98,6 +140,7 @@ impl CPU {
 
                 self.set_register(Register::Acc, reg1_value + reg2_value).unwrap();
             }
+
             _ => {
                 panic!("unknown instruction {:02X?}", instruction);
             }

@@ -1,34 +1,55 @@
 use mayo_lib::cpu::CPU;
-use mayo_lib::cpu::instructions::{MOV_LIT_R1, MOV_LIT_R2, ADD_REG_REG};
+use mayo_lib::cpu::instructions::*;
+use mayo_lib::cpu::register::Register;
 use mayo_lib::create_memory::create_memory;
 
+const IP: u8  = 0;
+const ACC: u8 = 1;
+const R1: u8  = 2;
+const R2: u8  = 3;
+
 fn main() {
-    let mut memory = create_memory(256);
+    let mut memory = create_memory(256*256);
 
-    memory[0] = MOV_LIT_R1;
-    memory[1] = 0x12;
-    memory[2] = 0x34;
+    let mut i = 0;
+    let mut add = |n: u8| {
+        memory[i] = n;
+        i += 1;
+    };
 
-    memory[3] = MOV_LIT_R2;
-    memory[4] = 0xAB;
-    memory[5] = 0xCD;
+    add(MOV_LIT_REG);
+    add(0x12);
+    add(0x34);
+    add(R1);
 
-    memory[6] = ADD_REG_REG;
-    memory[7] = 0x02; // r1
-    memory[8] = 0x03; // r2
+    add(MOV_LIT_REG);
+    add(0xAB);
+    add(0xCD);
+    add(R2);
+
+    add(ADD_REG_REG);
+    add(R1);
+    add(R2);
+
+    add(MOV_REG_MEM);
+    add(ACC);
+    add(0x01);
+    add(0x00);
 
 
     let mut cpu = CPU::new(memory);
 
-    cpu.step();
-    cpu.debug();
-    println!();
+    let mut step = || {
+        cpu.step();
+        cpu.debug();
+        println!();
+        cpu.view_memory_at(cpu.get_register(Register::Ip).unwrap() as usize);
+        cpu.view_memory_at(0x0100);
+        println!();
+    };
 
-    cpu.step();
-    cpu.debug();
-    println!();
-
-    cpu.step();
-    cpu.debug();
-    println!();
+    step();
+    step();
+    step();
+    step();
 }
