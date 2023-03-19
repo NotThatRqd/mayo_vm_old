@@ -33,7 +33,7 @@ impl CPU {
 
     pub fn debug(&self) {
         for register in all::<Register>() {
-            println!("{:?}: 0x{:02X?}", register, self.get_register(register).unwrap());
+            println!("{:?}: 0x{:04X?}", register, self.get_register(register).unwrap());
         }
     }
 
@@ -152,7 +152,7 @@ impl CPU {
             }
 
             _ => {
-                panic!("unknown instruction {:02X?}", instruction);
+                panic!("unknown instruction 0x{:02X?}", instruction);
             }
         };
         false
