@@ -13,6 +13,8 @@ pub struct CPU {
 
     registers: Vec<u8>,
     register_map: HashMap<Register, usize>,
+
+    stack_frame_size: u16,
 }
 
 impl CPU {
@@ -27,78 +29,73 @@ impl CPU {
             memory,
             // multiplied by two because each register is two bytes big
             registers: create_memory(cardinality::<Register>() * 2),
-            register_map
+            register_map,
+            stack_frame_size: 0,
         };
 
-        cpu.set_register(Register::Sp, (cpu.memory.len() - 1 - 1) as u16)
-            .unwrap();
-        cpu.set_register(Register::Fp, (cpu.memory.len() - 1 - 1) as u16)
-            .unwrap();
+        cpu.set_register(Register::Sp, (cpu.memory.len() - 1 - 1) as u16);
+        cpu.set_register(Register::Fp, (cpu.memory.len() - 1 - 1) as u16);
 
         cpu
     }
 
     pub fn debug(&self) {
         for register in all::<Register>() {
-            println!("{:?}: 0x{:04X?}", register, self.get_register(register).unwrap());
+            println!("{:?}: 0x{:04X?}", register, self.get_register(register));
         }
     }
 
-    pub fn view_memory_at(&self, address: usize) -> Result<(), ()> {
-        let mut next_eight_bytes = vec![];
-        for i in 0..=8 {
+    pub fn view_memory_at(&self, address: usize, n: usize) -> Result<(), ()> {
+        let mut next_n_bytes = vec![];
+        for i in 0..=n {
             let next = self.memory.read_at::<u8>(address + i);
-            if let Some(n) = next {
-                next_eight_bytes.push(n);
+            if let Some(next) = next {
+                next_n_bytes.push(next);
             } else {
                 return Err(());
             }
         }
 
-        println!("0x{:04X?}: {:02X?}", address, next_eight_bytes);
+        println!("0x{:04X?}: {:02X?}", address, next_n_bytes);
 
         Ok(())
     }
 
-    pub fn get_register(&self, register: Register) -> Option<u16> {
+    pub fn get_register(&self, register: Register) -> u16 {
         let index = self.register_map.get(&register)
             .expect(&format!("register {:?} not in self.register_map", register));
 
         let index = *index;
 
         self.registers.read_at::<u16>(index)
+            .expect("read register")
     }
 
-    fn set_register(&mut self, register: Register, value: u16) -> Result<(), &str> {
+    fn set_register(&mut self, register: Register, value: u16) {
         let index = self.register_map.get(&register)
             .expect(&format!("register {:?} not in self.register_map", register));
 
         let index = *index;
 
-        match self.registers.write_at::<u16>(index, value) {
-            Ok(_) => Ok(()),
-            Err(_) => Err("error writing to register")
-        }
+        // We panic instead of returning an Err() because we know that the index is correct, unless the cpu_dict test is wrong
+        self.registers.write_at::<u16>(index, value)
+            .expect("write to register");
     }
 
     fn fetch(&mut self) -> u8 {
-        let next_instruction_address = self.get_register(Register::Ip)
-            .unwrap();
+        let next_instruction_address = self.get_register(Register::Ip);
         let instruction = self.memory.read_at::<u8>(next_instruction_address as usize)
             .unwrap();
-        self.set_register(Register::Ip, next_instruction_address + 1)
-            .unwrap();
+        self.set_register(Register::Ip, next_instruction_address + 1);
 
         instruction
     }
 
     fn fetch16(&mut self) -> u16 {
-        let next_instruction_address = self.get_register(Register::Ip)
-            .unwrap();
+        let next_instruction_address = self.get_register(Register::Ip);
         let instruction = self.memory.read_at::<u16>(next_instruction_address as usize)
             .unwrap();
-        self.set_register(Register::Ip, next_instruction_address + 2)
-            .unwrap();
+        self.set_register(Register::Ip, next_instruction_address + 2);
 
         instruction
     }
@@ -109,15 +106,63 @@ impl CPU {
     }
 
     fn push(&mut self, value: u16) {
-        let sp_address = self.get_register(Register::Sp).unwrap();
+        let sp_address = self.get_register(Register::Sp);
         self.memory.write_at::<u16>(sp_address as usize, value).unwrap();
-        self.set_register(Register::Sp, sp_address - 2).unwrap();
+        self.set_register(Register::Sp, sp_address - 2);
+        self.stack_frame_size += 2;
     }
 
     fn pop(&mut self) -> u16 {
-        let next_sp_address = self.get_register(Register::Sp).unwrap() + 2;
-        self.set_register(Register::Sp, next_sp_address).unwrap();
+        let next_sp_address = self.get_register(Register::Sp) + 2;
+        self.set_register(Register::Sp, next_sp_address);
+        self.stack_frame_size -= 2;
         self.memory.read_at::<u16>(next_sp_address as usize).unwrap()
+    }
+
+    fn push_state(&mut self) {
+        self.push(self.get_register(Register::R1));
+        self.push(self.get_register(Register::R2));
+        self.push(self.get_register(Register::R3));
+        self.push(self.get_register(Register::R4));
+        self.push(self.get_register(Register::R5));
+        self.push(self.get_register(Register::R6));
+        self.push(self.get_register(Register::R7));
+        self.push(self.get_register(Register::R8));
+        self.push(self.get_register(Register::Ip));
+        self.push(self.stack_frame_size + 2);
+
+        self.set_register(Register::Fp, self.get_register(Register::Sp));
+        self.stack_frame_size = 0;
+    }
+
+    fn pop_state(&mut self) {
+        let frame_pointer_address = self.get_register(Register::Fp);
+        self.set_register(Register::Sp, frame_pointer_address);
+
+        self.stack_frame_size = self.pop();
+        let stack_frame_size = self.stack_frame_size;
+
+        let mut pop_into_reg = |register: Register| {
+            let value = self.pop();
+            self.set_register(register, value);
+        };
+
+        pop_into_reg(Register::Ip);
+        pop_into_reg(Register::R8);
+        pop_into_reg(Register::R7);
+        pop_into_reg(Register::R6);
+        pop_into_reg(Register::R5);
+        pop_into_reg(Register::R4);
+        pop_into_reg(Register::R3);
+        pop_into_reg(Register::R2);
+        pop_into_reg(Register::R1);
+
+        let n_args = self.pop();
+        for _i in 0..n_args {
+            self.pop();
+        }
+
+        self.set_register(Register::Fp, frame_pointer_address + stack_frame_size);
     }
 
     fn execute(&mut self, instruction: u8) -> bool {
@@ -162,16 +207,15 @@ impl CPU {
                 let reg1_value = self.registers.read_at::<u16>(reg1).unwrap();
                 let reg2_value = self.registers.read_at::<u16>(reg2).unwrap();
 
-                self.set_register(Register::Acc, reg1_value + reg2_value).unwrap();
+                self.set_register(Register::Acc, reg1_value + reg2_value);
             }
 
             JMP_NOT_EQ => {
                 let value = self.fetch16();
                 let address = self.fetch16();
 
-                if value != self.get_register(Register::Acc).unwrap() {
-                    self.set_register(Register::Ip, address)
-                        .unwrap();
+                if value != self.get_register(Register::Acc) {
+                    self.set_register(Register::Ip, address);
                 }
             }
 
@@ -190,6 +234,25 @@ impl CPU {
                 let reg = self.fetch_register_index();
                 let value = self.pop();
                 self.registers.write_at::<u16>(reg, value).unwrap();
+            }
+
+            CAL_LIT => {
+                let address = self.fetch16();
+                self.push_state();
+
+                self.set_register(Register::Ip, address);
+            }
+
+            CAL_REG => {
+                let reg = self.fetch_register_index();
+                let address = self.registers.read_at::<u16>(reg).unwrap();
+                self.push_state();
+
+                self.set_register(Register::Ip, address);
+            }
+
+            RET => {
+                self.pop_state();
             }
 
             _ => {
@@ -263,7 +326,7 @@ mod tests {
         cpu.step();
         cpu.step();
 
-        let acc_value = cpu.get_register(Register::Acc).unwrap();
+        let acc_value = cpu.get_register(Register::Acc);
         assert_eq!(acc_value, 0x1234 + 0xABCD);
     }
 }

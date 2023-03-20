@@ -7,3 +7,6 @@ pub const JMP_NOT_EQ:  u8 = 0x15;
 pub const PSH_LIT:     u8 = 0x17;
 pub const PSH_REG:     u8 = 0x18;
 pub const POP:         u8 = 0x1A;
+pub const CAL_LIT:     u8 = 0x5E;
+pub const CAL_REG:     u8 = 0x5F;
+pub const RET:         u8 = 0x60;

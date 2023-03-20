@@ -26,27 +26,72 @@ fn main() {
         i += 1;
     };
 
-    add(MOV_LIT_REG);
-    add(0x51);
-    add(0x51);
-    add(R1);
+    let subroutine_address = (0x30, 0x00);
+
+    add(PSH_LIT);
+    add(0x33);
+    add(0x33);
+
+    add(PSH_LIT);
+    add(0x22);
+    add(0x22);
+
+    add(PSH_LIT);
+    add(0x11);
+    add(0x11);
 
     add(MOV_LIT_REG);
-    add(0x42);
-    add(0x42);
-    add(R2);
-
-    add(PSH_REG);
+    add(0x12);
+    add(0x34);
     add(R1);
 
-    add(PSH_REG);
-    add(R2);
+    add(MOV_LIT_REG);
+    add(0x56);
+    add(0x78);
+    add(R4);
 
-    add(POP);
+    add(PSH_LIT);
+    add(0x00);
+    add(0x00);
+
+    add(CAL_LIT);
+    add(subroutine_address.0);
+    add(subroutine_address.1);
+
+    add(PSH_LIT);
+    add(0x44);
+    add(0x44);
+
+    // Subroutine..
+    let mut i = 0x3000;
+    let mut add = |n: u8| {
+        memory[i] = n;
+        i += 1;
+    };
+
+    add(PSH_LIT);
+    add(0x01);
+    add(0x02);
+
+    add(PSH_LIT);
+    add(0x03);
+    add(0x04);
+
+    add(PSH_LIT);
+    add(0x05);
+    add(0x06);
+
+    add(MOV_LIT_REG);
+    add(0x07);
+    add(0x08);
     add(R1);
 
-    add(POP);
-    add(R2);
+    add(MOV_LIT_REG);
+    add(0x09);
+    add(0x0A);
+    add(R8);
+
+    add(RET);
 
 
     let mut cpu = CPU::new(memory);
@@ -55,10 +100,10 @@ fn main() {
         cpu.step();
         cpu.debug();
         println!();
-        cpu.view_memory_at(cpu.get_register(Register::Ip).unwrap() as usize)
+        cpu.view_memory_at(cpu.get_register(Register::Ip) as usize, 8)
             .unwrap();
         //                 the stack
-        cpu.view_memory_at(0xFFFF - 1 - 7)
+        cpu.view_memory_at(0xFFFF - 1 - 43, 44)
             .unwrap();
         println!();
 
