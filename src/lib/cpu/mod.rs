@@ -23,12 +23,19 @@ impl CPU {
             register_map.insert(register, i * 2);
         }
 
-        CPU {
+        let mut cpu = CPU {
             memory,
             // multiplied by two because each register is two bytes big
             registers: create_memory(cardinality::<Register>() * 2),
             register_map
-        }
+        };
+
+        cpu.set_register(Register::Sp, (cpu.memory.len() - 1 - 1) as u16)
+            .unwrap();
+        cpu.set_register(Register::Fp, (cpu.memory.len() - 1 - 1) as u16)
+            .unwrap();
+
+        cpu
     }
 
     pub fn debug(&self) {
@@ -37,15 +44,20 @@ impl CPU {
         }
     }
 
-    pub fn view_memory_at(&self, address: usize) {
+    pub fn view_memory_at(&self, address: usize) -> Result<(), ()> {
         let mut next_eight_bytes = vec![];
         for i in 0..=8 {
-            let next = self.memory.read_at::<u8>(address + i)
-                .unwrap();
-            next_eight_bytes.push(next);
+            let next = self.memory.read_at::<u8>(address + i);
+            if let Some(n) = next {
+                next_eight_bytes.push(n);
+            } else {
+                return Err(());
+            }
         }
 
         println!("0x{:04X?}: {:02X?}", address, next_eight_bytes);
+
+        Ok(())
     }
 
     pub fn get_register(&self, register: Register) -> Option<u16> {
@@ -96,6 +108,18 @@ impl CPU {
         (self.fetch() as usize % self.register_map.len()) * 2
     }
 
+    fn push(&mut self, value: u16) {
+        let sp_address = self.get_register(Register::Sp).unwrap();
+        self.memory.write_at::<u16>(sp_address as usize, value).unwrap();
+        self.set_register(Register::Sp, sp_address - 2).unwrap();
+    }
+
+    fn pop(&mut self) -> u16 {
+        let next_sp_address = self.get_register(Register::Sp).unwrap() + 2;
+        self.set_register(Register::Sp, next_sp_address).unwrap();
+        self.memory.read_at::<u16>(next_sp_address as usize).unwrap()
+    }
+
     fn execute(&mut self, instruction: u8) -> bool {
         match instruction {
             MOV_LIT_REG => {
@@ -133,10 +157,10 @@ impl CPU {
             }
 
             ADD_REG_REG => {
-                let reg1 = self.fetch() as usize;
-                let reg2 = self.fetch() as usize;
-                let reg1_value = self.registers.read_at::<u16>(reg1 * 2).unwrap();
-                let reg2_value = self.registers.read_at::<u16>(reg2 * 2).unwrap();
+                let reg1 = self.fetch_register_index();
+                let reg2 = self.fetch_register_index();
+                let reg1_value = self.registers.read_at::<u16>(reg1).unwrap();
+                let reg2_value = self.registers.read_at::<u16>(reg2).unwrap();
 
                 self.set_register(Register::Acc, reg1_value + reg2_value).unwrap();
             }
@@ -149,6 +173,23 @@ impl CPU {
                     self.set_register(Register::Ip, address)
                         .unwrap();
                 }
+            }
+
+            PSH_LIT => {
+                let value = self.fetch16();
+                self.push(value);
+            }
+
+            PSH_REG => {
+                let reg = self.fetch_register_index();
+                let value = self.registers.read_at::<u16>(reg).unwrap();
+                self.push(value);
+            }
+
+            POP => {
+                let reg = self.fetch_register_index();
+                let value = self.pop();
+                self.registers.write_at::<u16>(reg, value).unwrap();
             }
 
             _ => {
@@ -185,6 +226,8 @@ mod tests {
         assert_eq!(cpu.register_map.get(&Register::R6), Some(&14));
         assert_eq!(cpu.register_map.get(&Register::R7), Some(&16));
         assert_eq!(cpu.register_map.get(&Register::R8), Some(&18));
+        assert_eq!(cpu.register_map.get(&Register::Sp), Some(&20));
+        assert_eq!(cpu.register_map.get(&Register::Fp), Some(&22));
     }
 
     const R1: u8  = 2;

@@ -12,4 +12,6 @@ pub enum Register {
     R6,
     R7,
     R8,
+    Sp,
+    Fp,
 }
