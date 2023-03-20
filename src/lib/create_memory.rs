@@ -1,6 +1,6 @@
 pub fn create_memory(bytes: usize) -> Vec<u8> {
-    if bytes == 0 {
-        panic!("bytes parameter can't be 0!");
+    if bytes < 8 {
+        panic!("bytes parameter must be greater than or equal to 8!");
     }
     vec![0; bytes]
 }

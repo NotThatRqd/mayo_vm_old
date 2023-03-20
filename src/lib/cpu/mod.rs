@@ -280,13 +280,13 @@ impl CPU {
 
 #[cfg(test)]
 mod tests {
-    use crate::cpu::{CPU, Register};
-    use crate::cpu::instructions::{ADD_REG_REG, MOV_LIT_REG};
+    use crate::cpu::{CPU, ExecuteError, Register};
+    use crate::cpu::instructions::*;
     use crate::create_memory::create_memory;
 
     #[test]
     fn cpu_dict() {
-        let mem = create_memory(1);
+        let mem = create_memory(8);
         let cpu = CPU::new(mem);
 
         assert_eq!(cpu.register_map.get(&Register::Ip), Some(&0));
@@ -305,6 +305,107 @@ mod tests {
 
     const R1: u8  = 2;
     const R2: u8  = 3;
+    const R8: u8  = 9;
+    const R4: u8  = 5;
+
+    #[test]
+    fn subroutine() {
+        let mut memory = create_memory(256 * 256);
+
+        let mut i = 0;
+        let mut add = |n: u8| {
+            memory[i] = n;
+            i += 1;
+        };
+
+        let subroutine_address = (0x30, 0x00);
+
+        add(PSH_LIT);
+        add(0x33);
+        add(0x33);
+
+        add(PSH_LIT);
+        add(0x22);
+        add(0x22);
+
+        add(PSH_LIT);
+        add(0x11);
+        add(0x11);
+
+        add(MOV_LIT_REG);
+        add(0x12);
+        add(0x34);
+        add(R1);
+
+        add(MOV_LIT_REG);
+        add(0x56);
+        add(0x78);
+        add(R4);
+
+        add(PSH_LIT);
+        add(0x00);
+        add(0x00);
+
+        add(CAL_LIT);
+        add(subroutine_address.0);
+        add(subroutine_address.1);
+
+        add(PSH_LIT);
+        add(0x44);
+        add(0x44);
+
+        // Subroutine..
+        let mut i = 0x3000;
+        let mut add = |n: u8| {
+            memory[i] = n;
+            i += 1;
+        };
+
+        add(PSH_LIT);
+        add(0x01);
+        add(0x02);
+
+        add(PSH_LIT);
+        add(0x03);
+        add(0x04);
+
+        add(PSH_LIT);
+        add(0x05);
+        add(0x06);
+
+        add(MOV_LIT_REG);
+        add(0x07);
+        add(0x08);
+        add(R1);
+
+        add(MOV_LIT_REG);
+        add(0x09);
+        add(0x0A);
+        add(R8);
+
+        add(RET);
+
+
+        let mut cpu = CPU::new(memory);
+
+        loop {
+            if let Err(e) = cpu.step() {
+                match e {
+                    ExecuteError::UnknownInstruction(instruction) => panic!("unknown instruction {:02X?}", instruction),
+                    ExecuteError::NullByte => break,
+                }
+            }
+        }
+
+        // Check that the state is the same as when we left it before calling the subroutine
+        assert_eq!(cpu.pop(), 0x4444);
+        assert_eq!(cpu.pop(), 0x1111);
+        assert_eq!(cpu.pop(), 0x2222);
+        assert_eq!(cpu.pop(), 0x3333);
+
+        assert_eq!(cpu.get_register(Register::R1), 0x1234);
+        assert_eq!(cpu.get_register(Register::R4), 0x5678);
+    }
 
     #[test]
     fn addition_program() {
