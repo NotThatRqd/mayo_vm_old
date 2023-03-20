@@ -8,6 +8,12 @@ use crate::create_memory::create_memory;
 pub mod instructions;
 pub mod register;
 
+#[derive(Debug)]
+pub enum ExecuteError {
+    UnknownInstruction(u8),
+    NullByte,
+}
+
 pub struct CPU {
     memory: Vec<u8>,
 
@@ -165,7 +171,7 @@ impl CPU {
         self.set_register(Register::Fp, frame_pointer_address + stack_frame_size);
     }
 
-    fn execute(&mut self, instruction: u8) -> bool {
+    fn execute(&mut self, instruction: u8) -> Result<bool, ExecuteError> {
         match instruction {
             MOV_LIT_REG => {
                 let literal = self.fetch16();
@@ -255,14 +261,18 @@ impl CPU {
                 self.pop_state();
             }
 
+            0x00 => {
+                return Err(ExecuteError::NullByte);
+            }
+
             _ => {
-                panic!("unknown instruction 0x{:02X?}", instruction);
+                return Err(ExecuteError::UnknownInstruction(instruction));
             }
         };
-        false
+        Ok(false)
     }
 
-    pub fn step(&mut self) -> bool {
+    pub fn step(&mut self) -> Result<bool, ExecuteError> {
         let instruction = self.fetch();
         self.execute(instruction)
     }

@@ -97,7 +97,7 @@ fn main() {
     let mut cpu = CPU::new(memory);
 
     loop {
-        cpu.step();
+        cpu.step().unwrap();
         cpu.debug();
         println!();
         cpu.view_memory_at(cpu.get_register(Register::Ip) as usize, 8)
