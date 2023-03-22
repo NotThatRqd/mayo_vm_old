@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::{Deref, DerefMut};
 use data_view::View;
 use enum_iterator::{all, cardinality};
 use crate::cpu::instructions::*;
@@ -14,8 +15,12 @@ pub enum ExecuteError {
     NullByte,
 }
 
-pub struct CPU {
-    memory: Vec<u8>,
+pub struct CPU<T, U>
+where
+    T: Deref<Target = U> + DerefMut<>,
+    U: View + ?Sized,
+{
+    memory: T,
 
     registers: Vec<u8>,
     register_map: HashMap<Register, usize>,
@@ -23,8 +28,12 @@ pub struct CPU {
     stack_frame_size: u16,
 }
 
-impl CPU {
-    pub fn new(memory: Vec<u8>) -> CPU {
+impl<T, U> CPU<T, U>
+where
+    T: Deref<Target = U> + DerefMut<>,
+    U: View + ?Sized,
+{
+    pub fn new(memory: T) -> Self {
         let mut register_map = HashMap::new();
 
         for (i, register) in all::<Register>().enumerate() {
@@ -39,8 +48,9 @@ impl CPU {
             stack_frame_size: 0,
         };
 
-        cpu.set_register(Register::Sp, (cpu.memory.len() - 1 - 1) as u16);
-        cpu.set_register(Register::Fp, (cpu.memory.len() - 1 - 1) as u16);
+        // TODO: this might break the test that checks for stack if its memory isn't big enough for this
+        cpu.set_register(Register::Sp, 0xFFFF - 1);
+        cpu.set_register(Register::Fp, 0xFFFF - 1);
 
         cpu
     }
