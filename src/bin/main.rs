@@ -3,6 +3,9 @@ use mayo_lib::cpu::instructions::*;
 use mayo_lib::cpu::register::Register;
 use mayo_lib::create_memory::create_memory;
 use console::Term;
+use mayo_lib::cpu::memory::Memory;
+use mayo_lib::devices::memory_mapper::MemoryMapper;
+use mayo_lib::devices::screen_device::ScreenDevice;
 
 const IP: u8  = 0;
 const ACC: u8 = 1;
@@ -93,8 +96,15 @@ fn main() {
 
     add(RET);
 
+    let memory = Box::new(Memory::from_vec(memory));
 
-    let mut cpu = CPU::new(memory);
+    let mut mm = MemoryMapper::new();
+    mm.map(memory, 0, 0xFFFF, true);
+
+    let screen_device = Box::new(ScreenDevice::new());
+    mm.map(screen_device, 0x3000, 0x30FF, true);
+
+    let mut cpu = CPU::new(mm);
 
     loop {
         cpu.step().unwrap();
