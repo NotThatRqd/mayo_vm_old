@@ -3,7 +3,7 @@ use mayo_lib::cpu::instructions::*;
 use mayo_lib::cpu::register::Register;
 use mayo_lib::create_memory::create_memory;
 use console::Term;
-use mayo_lib::cpu::memory::Memory;
+use mayo_lib::devices::memory::Memory;
 use mayo_lib::devices::memory_mapper::MemoryMapper;
 use mayo_lib::devices::screen_device::ScreenDevice;
 

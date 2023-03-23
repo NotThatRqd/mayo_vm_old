@@ -8,7 +8,6 @@ use crate::devices::device::Device;
 
 pub mod instructions;
 pub mod register;
-pub mod memory;
 
 #[derive(Debug)]
 pub enum ExecuteError {
