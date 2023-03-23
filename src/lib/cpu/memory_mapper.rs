@@ -28,6 +28,12 @@ where
     T: Deref<Target = U> + DerefMut<>,
     U: View + ?Sized,
 {
+    pub fn new() -> Self<> {
+        Self {
+            regions: VecDeque::new(),
+        }
+    }
+
     pub fn map(&mut self, device: T, start: usize, end: usize, remap: bool) {
         let region = Region {
             device,
