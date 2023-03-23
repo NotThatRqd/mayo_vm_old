@@ -10,3 +10,4 @@ pub const POP:         u8 = 0x1A;
 pub const CAL_LIT:     u8 = 0x5E;
 pub const CAL_REG:     u8 = 0x5F;
 pub const RET:         u8 = 0x60;
+pub const HLT:         u8 = 0xFF;

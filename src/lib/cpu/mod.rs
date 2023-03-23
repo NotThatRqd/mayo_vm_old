@@ -8,6 +8,7 @@ use crate::create_memory::create_memory;
 
 pub mod instructions;
 pub mod register;
+pub mod memory_mapper;
 
 #[derive(Debug)]
 pub enum ExecuteError {
@@ -48,7 +49,6 @@ where
             stack_frame_size: 0,
         };
 
-        // TODO: this might break the test that checks for stack if its memory isn't big enough for this
         cpu.set_register(Register::Sp, 0xFFFF - 1);
         cpu.set_register(Register::Fp, 0xFFFF - 1);
 
@@ -271,6 +271,10 @@ where
                 self.pop_state();
             }
 
+            HLT => {
+                return Ok(true);
+            }
+
             0x00 => {
                 return Err(ExecuteError::NullByte);
             }
@@ -285,6 +289,16 @@ where
     pub fn step(&mut self) -> Result<bool, ExecuteError> {
         let instruction = self.fetch();
         self.execute(instruction)
+    }
+
+    pub fn run(&mut self) {
+        loop {
+            let should_halt = self.step()
+                .unwrap();
+            if should_halt {
+                break;
+            }
+        }
     }
 }
 
