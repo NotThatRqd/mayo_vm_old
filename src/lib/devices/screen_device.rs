@@ -1,4 +1,3 @@
-use std::io::Write;
 use console::Term;
 use crate::devices::device::Device;
 
@@ -8,6 +7,14 @@ impl ScreenDevice {
     pub fn new() -> Self {
         Self
     }
+}
+
+fn set_bold() {
+    print!("\x1b[1m");
+}
+
+fn set_regular() {
+    print!("\x1b[0m");
 }
 
 impl Device for ScreenDevice {
@@ -24,6 +31,17 @@ impl Device for ScreenDevice {
     }
 
     fn write_at_u16(&mut self, offset: usize, num: u16) -> Result<(), ()> {
+        let command = (num & 0xFF00) >> 8;
+
+        if command == 0xFF {
+            Term::stdout().clear_screen()
+                .unwrap();
+        } else if command == 0x01 {
+            set_bold();
+        } else if command == 0x02 {
+            set_regular();
+        }
+
         let x = offset % 16;
         let y = (offset as f64 / 16.0).floor() as usize;
 

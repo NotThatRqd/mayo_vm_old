@@ -28,9 +28,9 @@ fn main() {
         i += 1;
     };
 
-    let mut write_char = |char: char, pos: u8| {
+    let mut write_char = |char: char, command: u8, pos: u8| {
         add(MOV_LIT_REG);
-        add(0x00);
+        add(command);
         add(char as u8);
         add(R1);
 
@@ -40,8 +40,17 @@ fn main() {
         add(pos);
     };
 
+    // Clear screen
+    write_char(' ', 0xFF, 0);
+
     for (i, char) in "Hi world!".chars().into_iter().enumerate() {
-        write_char(char, i as u8);
+        let command = if i % 2 == 0 {
+            0x01
+        } else {
+            0x02
+        };
+
+        write_char(char, command, i as u8);
     }
 
     add(HLT);
