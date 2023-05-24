@@ -1,3 +1,4 @@
+use std::env;
 use mayo_lib::cpu::CPU;
 use mayo_lib::cpu::instructions::*;
 use mayo_lib::create_memory::create_memory;
@@ -5,7 +6,7 @@ use mayo_lib::devices::memory::Memory;
 use mayo_lib::devices::memory_mapper::MemoryMapper;
 use mayo_lib::devices::screen_device::ScreenDevice;
 
-/*const IP: u8  = 0;
+const IP: u8  = 0;
 const ACC: u8 = 1;
 const R1: u8  = 2;
 const R2: u8  = 3;
@@ -16,10 +17,28 @@ const R6: u8  = 7;
 const R7: u8  = 8;
 const R8: u8  = 9;
 const SP: u8 = 10;
-const FP: u8 = 11;*/
-const R1: u8  = 2;
+const FP: u8 = 11;
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() > 1 {
+        // a cli arg was passed to the program
+        let arg1 = &args[1];
+
+        if arg1 == "true" {
+            // jump into test mode instead of usual loader
+            test_mode();
+        } else {
+            normal_mode();
+        }
+    } else {
+        // no cli args were passed to the program
+        normal_mode();
+    }
+}
+
+fn test_mode() {
     let mut memory = create_memory(256*256);
 
     let mut i = 0;
@@ -67,4 +86,8 @@ fn main() {
     let mut cpu = CPU::new(mm);
 
     cpu.run();
+}
+
+fn normal_mode() {
+    todo!()
 }
