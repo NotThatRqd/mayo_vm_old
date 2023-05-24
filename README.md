@@ -6,3 +6,6 @@ If you want to contribute just make a pull request with your changes and I'll pr
 
 Mayo VM is built, run, and tested using [Cargo](https://doc.rust-lang.org/cargo/), Rust's package manager.
 The project is split between `main.rs` and the `lib` folder. Basically everything important you will find in the `lib` folder.
+
+This project uses [cargo-cmd](https://crates.io/crates/cargo-cmd) which adds the functionality of npm scripts to cargo.
+It basically just adds the ability to alias any shell command.
