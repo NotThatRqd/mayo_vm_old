@@ -1,10 +1,11 @@
 use std::env;
 use mayo_lib::cpu::CPU;
 use mayo_lib::cpu::instructions::*;
-use mayo_lib::create_memory::create_memory;
-use mayo_lib::devices::memory::Memory;
-use mayo_lib::devices::memory_mapper::MemoryMapper;
-use mayo_lib::devices::screen_device::ScreenDevice;
+use crate::devices::memory::Memory;
+use crate::devices::memory_mapper::MemoryMapper;
+use crate::devices::screen_device::ScreenDevice;
+
+pub mod devices;
 
 const IP: u8  = 0;
 const ACC: u8 = 1;
@@ -39,7 +40,9 @@ fn main() {
 }
 
 fn test_mode() {
-    let mut memory = create_memory(256*256);
+    // 256^2 is how many different combinations of two bytes there are
+    // same as 2^16 (how many combinations of 16 bits)
+    let mut memory = vec![0; 256*256];
 
     let mut i = 0;
     let mut add = |n: u8| {
@@ -90,4 +93,146 @@ fn test_mode() {
 
 fn normal_mode() {
     todo!()
+}
+
+#[cfg(test)]
+mod tests {
+    use mayo_lib::cpu::CPU;
+    use mayo_lib::cpu::instructions::*;
+    use mayo_lib::cpu::register::Register;
+    use crate::devices::memory::Memory;
+    // see todo in register.rs
+    use crate::R1;
+    use crate::R2;
+    use crate::R4;
+    use crate::R8;
+
+    #[test]
+    fn addition_program() {
+        let mut mem: Vec<u8> = vec![0; 16];
+
+        let mut i = 0;
+        let mut add = |n: u8| {
+            mem[i] = n;
+            i += 1;
+        };
+
+        add(MOV_LIT_REG);
+        add(0x12);
+        add(0x34);
+        add(R1);
+
+        add(MOV_LIT_REG);
+        add(0xAB);
+        add(0xCD);
+        add(R2);
+
+        add(ADD_REG_REG);
+        add(R1);
+        add(R2);
+
+        add(HLT);
+
+        let mem = Memory::from_vec(mem);
+        let mut cpu = CPU::new(mem);
+
+        cpu.run();
+
+        let acc_value = cpu.get_register(Register::Acc);
+        assert_eq!(acc_value, 0x1234 + 0xABCD);
+    }
+
+    #[test]
+    fn subroutine_program() {
+        let mut mem: Vec<u8> = vec![0; 256*256];
+
+        let mut i = 0;
+        let mut add = |n: u8| {
+            mem[i] = n;
+            i += 1;
+        };
+
+        let subroutine_address = (0x30, 0x00);
+
+        add(PSH_LIT);
+        add(0x33);
+        add(0x33);
+
+        add(PSH_LIT);
+        add(0x22);
+        add(0x22);
+
+        add(PSH_LIT);
+        add(0x11);
+        add(0x11);
+
+        add(MOV_LIT_REG);
+        add(0x12);
+        add(0x34);
+        add(R1);
+
+        add(MOV_LIT_REG);
+        add(0x56);
+        add(0x78);
+        add(R4);
+
+        add(PSH_LIT);
+        add(0x00);
+        add(0x00);
+
+        add(CAL_LIT);
+        add(subroutine_address.0);
+        add(subroutine_address.1);
+
+        add(PSH_LIT);
+        add(0x44);
+        add(0x44);
+
+        add(HLT);
+
+        // Subroutine..
+        let mut i = 0x3000;
+        let mut add = |n: u8| {
+            mem[i] = n;
+            i += 1;
+        };
+
+        add(PSH_LIT);
+        add(0x01);
+        add(0x02);
+
+        add(PSH_LIT);
+        add(0x03);
+        add(0x04);
+
+        add(PSH_LIT);
+        add(0x05);
+        add(0x06);
+
+        add(MOV_LIT_REG);
+        add(0x07);
+        add(0x08);
+        add(R1);
+
+        add(MOV_LIT_REG);
+        add(0x09);
+        add(0x0A);
+        add(R8);
+
+        add(RET);
+
+        let mem = Memory::from_vec(mem);
+        let mut cpu = CPU::new(mem);
+
+        cpu.run();
+
+        // Check that the state is the same as when we left it before calling the subroutine
+        assert_eq!(cpu.pop(), 0x4444);
+        assert_eq!(cpu.pop(), 0x1111);
+        assert_eq!(cpu.pop(), 0x2222);
+        assert_eq!(cpu.pop(), 0x3333);
+
+        assert_eq!(cpu.get_register(Register::R1), 0x1234);
+        assert_eq!(cpu.get_register(Register::R4), 0x5678);
+    }
 }

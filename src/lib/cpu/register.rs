@@ -1,5 +1,6 @@
 use enum_iterator::Sequence;
 
+// todo: instead of register being an enum, it should just be a bunch of u8 consts for the index of it
 #[derive(Copy, Clone, Debug, Sequence, Hash, PartialEq, Eq)]
 pub enum Register {
     Ip,
