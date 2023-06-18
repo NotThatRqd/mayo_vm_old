@@ -73,7 +73,7 @@ fn test_mode() {
     let screen_device = Box::new(ScreenDevice::new());
     mm.map(screen_device, 0x3000, 0x30FF, true);
 
-    let mut cpu = CPU::new(mm);
+    let mut cpu = CPU::new(Box::new(mm));
 
     cpu.run();
 }

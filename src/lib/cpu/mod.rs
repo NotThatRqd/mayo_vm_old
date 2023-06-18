@@ -14,14 +14,14 @@ pub enum ExecuteError {
     NullByte,
 }
 
-pub struct CPU<T: Device> {
-    memory: T,
+pub struct CPU {
+    memory: Box<dyn Device>,
     registers: Vec<u8>,
     stack_frame_size: u16,
 }
 
-impl<T: Device> CPU<T> {
-    pub fn new(memory: T) -> Self {
+impl CPU {
+    pub fn new(memory: Box<dyn Device>) -> Self {
         let mut cpu = CPU {
             memory,
             // multiplied by two because each register is two bytes big
@@ -309,7 +309,7 @@ mod tests {
         add(HLT);
 
         let mem = Memory::from_vec(mem);
-        let mut cpu = CPU::new(mem);
+        let mut cpu = CPU::new(Box::new(mem));
 
         cpu.run();
 
@@ -397,7 +397,7 @@ mod tests {
         add(RET);
 
         let mem = Memory::from_vec(mem);
-        let mut cpu = CPU::new(mem);
+        let mut cpu = CPU::new(Box::new(mem));
 
         cpu.run();
 
