@@ -1,7 +1,6 @@
-use enum_iterator::Sequence;
+use enum_iterator::{Sequence};
 
-// todo: instead of register being an enum, it should just be a bunch of u8 consts for the index of it
-#[derive(Copy, Clone, Debug, Sequence, Hash, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, Sequence, Eq, PartialEq)]
 pub enum Register {
     Ip,
     Acc,
@@ -15,4 +14,11 @@ pub enum Register {
     R8,
     Sp,
     Fp,
+}
+
+impl Register {
+    pub fn as_index(&self) -> usize {
+        // multiplied by two because registers are two bytes big
+        *self as usize * 2
+    }
 }

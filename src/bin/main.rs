@@ -1,22 +1,10 @@
 use std::env;
 use mayo_lib::cpu::CPU;
 use mayo_lib::cpu::instructions::*;
+use mayo_lib::cpu::register::Register;
 use mayo_lib::devices::memory::Memory;
 use mayo_lib::devices::memory_mapper::MemoryMapper;
 use mayo_lib::devices::screen_device::ScreenDevice;
-
-const IP: u8  = 0;
-const ACC: u8 = 1;
-const R1: u8  = 2;
-const R2: u8  = 3;
-const R3: u8  = 4;
-const R4: u8  = 5;
-const R5: u8  = 6;
-const R6: u8  = 7;
-const R7: u8  = 8;
-const R8: u8  = 9;
-const SP: u8 = 10;
-const FP: u8 = 11;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -38,6 +26,7 @@ fn main() {
 }
 
 fn test_mode() {
+    // 256 is how many different combinations of 8 bits (a byte) there are (2^8)
     // 256^2 is how many different combinations of two bytes there are
     // same as 2^16 (how many combinations of 16 bits)
     let mut memory = vec![0; 256*256];
@@ -52,10 +41,10 @@ fn test_mode() {
         add(MOV_LIT_REG);
         add(command);
         add(char as u8);
-        add(R1);
+        add(Register::R1 as u8);
 
         add(MOV_REG_MEM);
-        add(R1);
+        add(Register::R1 as u8);
         add(0x30);
         add(pos);
     };
@@ -99,11 +88,6 @@ mod tests {
     use mayo_lib::cpu::instructions::*;
     use mayo_lib::cpu::register::Register;
     use mayo_lib::devices::memory::Memory;
-    // see todo in register.rs
-    use crate::R1;
-    use crate::R2;
-    use crate::R4;
-    use crate::R8;
 
     #[test]
     fn addition_program() {
@@ -118,16 +102,16 @@ mod tests {
         add(MOV_LIT_REG);
         add(0x12);
         add(0x34);
-        add(R1);
+        add(Register::R1 as u8);
 
         add(MOV_LIT_REG);
         add(0xAB);
         add(0xCD);
-        add(R2);
+        add(Register::R2 as u8);
 
         add(ADD_REG_REG);
-        add(R1);
-        add(R2);
+        add(Register::R1 as u8);
+        add(Register::R2 as u8);
 
         add(HLT);
 
@@ -167,12 +151,12 @@ mod tests {
         add(MOV_LIT_REG);
         add(0x12);
         add(0x34);
-        add(R1);
+        add(Register::R1 as u8);
 
         add(MOV_LIT_REG);
         add(0x56);
         add(0x78);
-        add(R4);
+        add(Register::R4 as u8);
 
         add(PSH_LIT);
         add(0x00);
@@ -210,12 +194,12 @@ mod tests {
         add(MOV_LIT_REG);
         add(0x07);
         add(0x08);
-        add(R1);
+        add(Register::R1 as u8);
 
         add(MOV_LIT_REG);
         add(0x09);
         add(0x0A);
-        add(R8);
+        add(Register::R8 as u8);
 
         add(RET);
 

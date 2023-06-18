@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use data_view::View;
 use enum_iterator::{all, cardinality};
 use crate::cpu::instructions::*;
@@ -15,34 +14,18 @@ pub enum ExecuteError {
     NullByte,
 }
 
-pub struct CPU<T>
-where
-    T: Device
-{
+pub struct CPU<T: Device> {
     memory: T,
-
     registers: Vec<u8>,
-    register_map: HashMap<Register, usize>,
-
     stack_frame_size: u16,
 }
 
-impl<T> CPU<T>
-where
-    T: Device
-{
+impl<T: Device> CPU<T> {
     pub fn new(memory: T) -> Self {
-        let mut register_map = HashMap::new();
-
-        for (i, register) in all::<Register>().enumerate() {
-            register_map.insert(register, i * 2);
-        }
-
         let mut cpu = CPU {
             memory,
             // multiplied by two because each register is two bytes big
             registers: create_memory(cardinality::<Register>() * 2),
-            register_map,
             stack_frame_size: 0,
         };
 
@@ -75,22 +58,15 @@ where
     }
 
     pub fn get_register(&self, register: Register) -> u16 {
-        let index = self.register_map.get(&register)
-            .expect(&format!("register {:?} not in self.register_map", register));
-
-        let index = *index;
+        let index = register.as_index();
 
         self.registers.read_at::<u16>(index)
             .expect("read register")
     }
 
     fn set_register(&mut self, register: Register, value: u16) {
-        let index = self.register_map.get(&register)
-            .expect(&format!("register {:?} not in self.register_map", register));
+        let index = register.as_index();
 
-        let index = *index;
-
-        // We panic instead of returning an Err() because we know that the index is correct, unless the cpu_dict test is wrong
         self.registers.write_at::<u16>(index, value)
             .expect("write to register");
     }
@@ -115,7 +91,7 @@ where
 
     fn fetch_register_index(&mut self) -> usize {
         // multiplied by two because each register is two bytes long
-        (self.fetch() as usize % self.register_map.len()) * 2
+        self.fetch() as usize * 2
     }
 
     pub fn push(&mut self, value: u16) {
