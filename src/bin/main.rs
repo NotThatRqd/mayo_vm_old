@@ -1,11 +1,9 @@
 use std::env;
 use mayo_lib::cpu::CPU;
 use mayo_lib::cpu::instructions::*;
-use crate::devices::memory::Memory;
-use crate::devices::memory_mapper::MemoryMapper;
-use crate::devices::screen_device::ScreenDevice;
-
-pub mod devices;
+use mayo_lib::devices::memory::Memory;
+use mayo_lib::devices::memory_mapper::MemoryMapper;
+use mayo_lib::devices::screen_device::ScreenDevice;
 
 const IP: u8  = 0;
 const ACC: u8 = 1;
@@ -100,7 +98,7 @@ mod tests {
     use mayo_lib::cpu::CPU;
     use mayo_lib::cpu::instructions::*;
     use mayo_lib::cpu::register::Register;
-    use crate::devices::memory::Memory;
+    use mayo_lib::devices::memory::Memory;
     // see todo in register.rs
     use crate::R1;
     use crate::R2;

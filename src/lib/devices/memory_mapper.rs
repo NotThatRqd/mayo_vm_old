@@ -1,5 +1,5 @@
 use std::collections::VecDeque;
-use mayo_lib::device::Device;
+use crate::device::Device;
 
 struct Region {
     device: Box<dyn Device>,
@@ -39,6 +39,10 @@ impl MemoryMapper {
     /// # Examples
     ///
     /// ```
+    /// use mayo_lib::devices::memory::Memory;
+    /// use mayo_lib::devices::memory_mapper::MemoryMapper;
+    /// use mayo_lib::devices::screen_device::ScreenDevice;
+    ///
     /// let mem = Box::new(Memory::from_num_of_bytes(256*256));
     /// let screen_device = Box::new(ScreenDevice::new());
     /// let mut mm = MemoryMapper::new();

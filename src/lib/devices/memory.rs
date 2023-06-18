@@ -1,5 +1,5 @@
 use data_view::View;
-use mayo_lib::device::Device;
+use crate::device::Device;
 
 /// The most basic implementation of the Device trait that simply uses a Vec<u8> under the hood.
 pub struct Memory {

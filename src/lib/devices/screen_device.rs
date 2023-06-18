@@ -1,5 +1,5 @@
 use console::Term;
-use mayo_lib::device::Device;
+use crate::device::Device;
 
 pub struct ScreenDevice;
 
