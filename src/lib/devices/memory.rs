@@ -1,7 +1,7 @@
 use data_view::View;
 use crate::device::Device;
 
-/// The most basic implementation of the Device trait that simply uses a Vec<u8> under the hood.
+/// The most basic implementation of the Device trait that simply uses a Vec\<u8> under the hood.
 pub struct Memory {
     internal_mem: Vec<u8>
 }
