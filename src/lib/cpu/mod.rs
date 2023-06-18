@@ -2,7 +2,6 @@ use data_view::View;
 use enum_iterator::{all, cardinality};
 use crate::cpu::instructions::*;
 use crate::cpu::register::Register;
-use crate::create_memory::create_memory;
 use crate::device::Device;
 
 pub mod instructions;
@@ -25,7 +24,7 @@ impl CPU {
         let mut cpu = CPU {
             memory,
             // multiplied by two because each register is two bytes big
-            registers: create_memory(cardinality::<Register>() * 2),
+            registers: vec![0; cardinality::<Register>() * 2],
             stack_frame_size: 0,
         };
 
