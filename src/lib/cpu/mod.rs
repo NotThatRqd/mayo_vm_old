@@ -279,7 +279,6 @@ mod tests {
     use crate::cpu::CPU;
     use crate::cpu::instructions::*;
     use crate::cpu::register::Register;
-    use crate::devices::memory::Memory;
 
     #[test]
     fn addition_program() {
@@ -307,7 +306,6 @@ mod tests {
 
         add(HLT);
 
-        let mem = Memory::from_vec(mem);
         let mut cpu = CPU::new(Box::new(mem));
 
         cpu.run();
@@ -395,7 +393,6 @@ mod tests {
 
         add(RET);
 
-        let mem = Memory::from_vec(mem);
         let mut cpu = CPU::new(Box::new(mem));
 
         cpu.run();

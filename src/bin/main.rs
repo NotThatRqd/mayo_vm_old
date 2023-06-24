@@ -2,7 +2,6 @@ use std::env;
 use mayo_lib::cpu::CPU;
 use mayo_lib::cpu::instructions::*;
 use mayo_lib::cpu::register::Register;
-use mayo_lib::devices::memory::Memory;
 use mayo_lib::devices::memory_mapper::MemoryMapper;
 use mayo_lib::devices::screen_device::ScreenDevice;
 
@@ -65,7 +64,7 @@ fn test_mode() {
     add(HLT);
 
 
-    let memory = Box::new(Memory::from_vec(memory));
+    let memory = Box::new(memory);
 
     let mut mm = MemoryMapper::new();
     mm.map(memory, 0, 0xFFFF, true);

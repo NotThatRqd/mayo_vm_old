@@ -39,11 +39,10 @@ impl MemoryMapper {
     /// # Examples
     ///
     /// ```
-    /// use mayo_lib::devices::memory::Memory;
     /// use mayo_lib::devices::memory_mapper::MemoryMapper;
     /// use mayo_lib::devices::screen_device::ScreenDevice;
     ///
-    /// let mem = Box::new(Memory::from_num_of_bytes(256*256));
+    /// let mem = Box::new(vec![0; 256*256]);
     /// let screen_device = Box::new(ScreenDevice::new());
     /// let mut mm = MemoryMapper::new();
     /// mm.map(mem, 0, 0xFFFF, true);
