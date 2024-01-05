@@ -14,12 +14,17 @@ pub enum ExecuteError {
 }
 
 pub struct CPU {
-    memory: Box<dyn Device>,
+    // Find a way so that you can't mutate this, only view it from outside
+    pub memory: Box<dyn Device>,
     registers: Vec<u8>,
     stack_frame_size: u16,
 }
 
 impl CPU {
+/*    pub fn look_at_mem(&self) -> &Box<dyn Device> {
+        &self.memory
+    }*/
+
     pub fn new(memory: Box<dyn Device>) -> Self {
         let mut cpu = CPU {
             memory,

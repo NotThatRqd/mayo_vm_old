@@ -18,5 +18,12 @@ data-view = { version = "5.1.0", features = ["BE"] }
 enum-iterator = "1.4.0"
 console = "0.15.5"
 
+cursive_hexview = "0.7"
+
+[dependencies.cursive]
+version = "0.20"
+default-features = false
+features = ["crossterm-backend"]
+
 [package.metadata.commands]
 test_mode = "cargo run -- true"

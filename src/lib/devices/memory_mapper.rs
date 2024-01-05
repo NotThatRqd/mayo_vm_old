@@ -1,5 +1,7 @@
+use std::any::Any;
 use std::collections::VecDeque;
 use crate::device::Device;
+use crate::into_any::IntoAny;
 
 struct Region {
     device: Box<dyn Device>,
@@ -126,5 +128,11 @@ impl Device for MemoryMapper {
         }
 
         region.device.write_at_u16(final_address, num)
+    }
+}
+
+impl IntoAny for MemoryMapper {
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
     }
 }

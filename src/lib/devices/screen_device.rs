@@ -1,5 +1,7 @@
+use std::any::Any;
 use console::Term;
 use crate::device::Device;
+use crate::into_any::IntoAny;
 
 pub struct ScreenDevice;
 
@@ -54,5 +56,11 @@ impl Device for ScreenDevice {
         print!("{}", character_value as char);
 
         Ok(())
+    }
+}
+
+impl IntoAny for ScreenDevice {
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
     }
 }

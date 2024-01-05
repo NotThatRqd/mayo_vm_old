@@ -1,4 +1,9 @@
+use std::any::Any;
 use std::env;
+use cursive::Cursive;
+use cursive::views::{Dialog, SelectView};
+use cursive_hexview::{DisplayState, HexView};
+use cursive::traits::*;
 use mayo_lib::cpu::CPU;
 use mayo_lib::cpu::instructions::*;
 use mayo_lib::cpu::register::Register;
@@ -16,11 +21,11 @@ fn main() {
             // jump into test mode instead of usual loader
             test_mode();
         } else {
-            normal_mode();
+            tui_mode();
         }
     } else {
         // no cli args were passed to the program
-        normal_mode();
+        tui_mode();
     }
 }
 
@@ -77,6 +82,58 @@ fn test_mode() {
     cpu.run();
 }
 
-fn normal_mode() {
-    todo!()
+fn tui_mode() {
+    let mut siv = cursive::default();
+
+    #[derive(Copy, Clone)]
+    enum MemoryType {
+        Basic,
+        Mapped
+    }
+
+    let mem_type_select = SelectView::<MemoryType>::new()
+        .item("Basic", MemoryType::Basic)
+        .item("Mapped", MemoryType::Mapped)
+        .on_submit(|s, mem_type| {
+            match mem_type {
+                MemoryType::Basic => {
+                    s.pop_layer();
+                    edit_basic_memory(s);
+                }
+                MemoryType::Mapped => {
+                    s.add_layer(Dialog::info("Mapped is not yet implemented"));
+                }
+            }
+        });
+
+    siv.add_layer(Dialog::around(mem_type_select).title("Select a type of memory"));
+
+    siv.run();
+}
+
+fn edit_basic_memory(s: &mut Cursive) {
+    let mem_view = HexView::new()
+        .display_state(DisplayState::Editable)
+        .with_name("mem_view");
+
+    s.add_layer(Dialog::around(mem_view)
+        .title("Edit the memory")
+        .button("Run", |s| {
+            // run the cpu
+            let mut mem_view = s.find_name::<HexView>("mem_view").unwrap();
+
+            let data = mem_view.data().to_owned();
+
+            let mut cpu = CPU::new(Box::new(data));
+            cpu.run();
+
+            let final_mem: Box<Vec<u8>> = get(cpu.memory.into_any());
+
+            mem_view.set_data(final_mem.into_iter());
+        }));
+}
+
+fn get<T: Any>(value: Box<dyn Any>) -> Box<T> {
+    let pv = value.downcast().expect("The pointed-to value must be of type T");
+    pv
 }
